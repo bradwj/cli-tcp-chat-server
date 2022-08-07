@@ -87,8 +87,9 @@ func (s *server) joinRoom(c *client, args []string) {
 
 	c.room = r
 
-	r.broadcast(c, fmt.Sprintf("%s has joined the room", c.name))
+	log.Printf("created room: %s", roomName)
 	c.msg(fmt.Sprintf("welcome to %s", r.name))
+	r.broadcast(c, fmt.Sprintf("%s has joined the room", c.name))
 }
 
 func (s *server) listRooms(c *client, args []string) {
@@ -136,8 +137,17 @@ func (s *server) quit(c *client, args []string) {
 
 func (s *server) removeClientFromRoom(c *client) {
 	if c.room != nil {
+		// remove client from room member list
 		delete(c.room.members, c.conn.RemoteAddr())
-		c.room.broadcast(c, fmt.Sprintf("%s has left the room", c.name))
+
+		// delete room if no members left
+		if len(c.room.members) == 0 {
+			delete(s.rooms, c.room.name)	
+			log.Printf("deleting room: %s", c.room.name)
+		} else {
+			c.room.broadcast(c, fmt.Sprintf("%s has left the room", c.name))
+		}
+		c.room = nil
 	}
 }
 
