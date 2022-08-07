@@ -80,6 +80,11 @@ func (s *server) joinRoom(c *client, args []string) {
 }
 
 func (s *server) listRooms(c *client, args []string) {
+	if len(s.rooms) == 0 {
+		c.msg("there are no available rooms. type \"/join <room name>\" to create one!")
+		return
+	}
+
 	var roomNames []string
 	for name := range s.rooms {
 		roomNames = append(roomNames, name)
