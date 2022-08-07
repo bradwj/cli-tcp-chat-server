@@ -64,7 +64,7 @@ func (c *client) readInput() {
 				args:   args,
 			}
 		default:
-			c.err(fmt.Errorf("unknown command: %s", cmd))
+			c.err(fmt.Errorf("unknown command: %s\nFor a list of available commands, enter \"/help\"", cmd))
 		}
 	}
 }
