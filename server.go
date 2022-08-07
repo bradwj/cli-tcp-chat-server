@@ -14,6 +14,7 @@ type server struct {
 }
 
 const MAX_MESSAGE_LENGTH = 1000
+const MAX_NAME_LENGTH = 20
 
 func newServer() *server {
 	return &server{
@@ -59,8 +60,23 @@ func (s *server) setName(c *client, args []string) {
 		return
 	}
 
-	c.name = args[1]
-	c.msg(fmt.Sprintf("setting name to: %s", c.name))
+	oldName := c.name
+	newName := strings.Join(args[1:], " ")
+	if len(newName) > MAX_NAME_LENGTH {
+		c.err(errors.New(fmt.Sprintf("name is too long! (%d / %d maximum allowed characters)",
+			len(newName),
+			MAX_NAME_LENGTH,
+		)))
+		return
+	}
+
+	c.name = newName
+	c.msg(fmt.Sprintf("changing name to \"%s\"", c.name))
+
+	// broadcast to room when user changes name
+	if c.room != nil {
+		c.room.broadcast(fmt.Sprintf("user \"%s\" changed name to \"%s\"", oldName, c.name))
+	}
 }
 
 func (s *server) joinRoom(c *client, args []string) {
@@ -89,7 +105,7 @@ func (s *server) joinRoom(c *client, args []string) {
 
 	log.Printf("created room: %s", roomName)
 	c.msg(fmt.Sprintf("welcome to %s", r.name))
-	r.broadcast(c, fmt.Sprintf("%s has joined the room", c.name))
+	r.broadcast(fmt.Sprintf("%s has joined the room", c.name))
 }
 
 func (s *server) listRooms(c *client, args []string) {
@@ -123,7 +139,7 @@ func (s *server) sendMessage(c *client, args []string) {
 		return
 	}
 
-	c.room.broadcast(c, c.name+": "+message)
+	c.room.broadcast(c.name+": "+message)
 }
 
 func (s *server) quit(c *client, args []string) {
@@ -143,9 +159,9 @@ func (s *server) removeClientFromRoom(c *client) {
 		// delete room if no members left
 		if len(c.room.members) == 0 {
 			delete(s.rooms, c.room.name)	
-			log.Printf("deleting room: %s", c.room.name)
+			log.Printf("deleted room: %s", c.room.name)
 		} else {
-			c.room.broadcast(c, fmt.Sprintf("%s has left the room", c.name))
+			c.room.broadcast(fmt.Sprintf("%s has left the room", c.name))
 		}
 		c.room = nil
 	}

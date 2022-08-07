@@ -7,7 +7,7 @@ type room struct {
 	members map[net.Addr]*client
 }
 
-func (r *room) broadcast(sender *client, msg string) {
+func (r *room) broadcast(msg string) {
 	for _, member := range r.members {
 		member.msg(msg)
 	}
