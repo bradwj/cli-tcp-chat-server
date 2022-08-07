@@ -52,11 +52,21 @@ func (s *server) newClient(conn net.Conn) {
 }
 
 func (s *server) setName(c *client, args []string) {
+	if len(args) < 2 {
+		c.err(errors.New("you must specify a name. e.g. \"/name brad\""))
+		return
+	}
+
 	c.name = args[1]
 	c.msg(fmt.Sprintf("setting name to: %s", c.name))
 }
 
 func (s *server) joinRoom(c *client, args []string) {
+	if len(args) < 2 {
+		c.err(errors.New("you must specify a room name. e.g. \"/join groupchat\""))
+		return
+	}
+
 	roomName := args[1]
 	r, ok := s.rooms[roomName]
 	// create new room if does not already exist

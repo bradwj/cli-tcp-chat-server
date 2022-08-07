@@ -22,9 +22,9 @@ func (c *client) readInput() {
 		}
 
 		msg = strings.Trim(msg, "\r\n")
-
+		msg = strings.TrimSpace(msg)
 		args := strings.Split(msg, " ")
-		cmd := strings.TrimSpace(args[0])
+		cmd := args[0]
 
 		switch cmd {
 		case "/name":
