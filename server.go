@@ -113,7 +113,7 @@ func (s *server) sendMessage(c *client, args []string) {
 
 	message := strings.Join(args[1:], " ")
 
-	// check if message is greater than 2000 characters
+	// check if message is longer than max length allowed
 	if len(message) > MAX_MESSAGE_LENGTH {
 		c.err(errors.New(fmt.Sprintf("message is too long! (%d / %d maximum allowed characters)",
 			len(message),
