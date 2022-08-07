@@ -13,6 +13,8 @@ type server struct {
 	commands chan command
 }
 
+const MAX_MESSAGE_LENGTH = 1000
+
 func newServer() *server {
 	return &server{
 		rooms:    make(map[string]*room),
@@ -72,12 +74,12 @@ func (s *server) joinRoom(c *client, args []string) {
 	// create new room if does not already exist
 	if !ok {
 		r = &room{
-			name: roomName,
+			name:    roomName,
 			members: make(map[net.Addr]*client),
 		}
 		s.rooms[roomName] = r
 	}
-	
+
 	r.members[c.conn.RemoteAddr()] = c
 
 	// remove client from current room
@@ -109,7 +111,18 @@ func (s *server) sendMessage(c *client, args []string) {
 		return
 	}
 
-	c.room.broadcast(c, c.name + ": " + strings.Join(args[1:], " "))
+	message := strings.Join(args[1:], " ")
+
+	// check if message is greater than 2000 characters
+	if len(message) > MAX_MESSAGE_LENGTH {
+		c.err(errors.New(fmt.Sprintf("message is too long! (%d / %d maximum allowed characters)",
+			len(message),
+			MAX_MESSAGE_LENGTH,
+		)))
+		return
+	}
+
+	c.room.broadcast(c, c.name+": "+message)
 }
 
 func (s *server) quit(c *client, args []string) {
