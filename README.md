@@ -7,3 +7,4 @@ A command-line interface where you can send and receive messages through a TCP c
 - `/rooms` -- Show list of available rooms to join.
 - `/msg <message>` -- Broadcast message to everyone in current room.
 - `/quit` -- Disconnect from the chat server.
+- `/help` -- List available commands.

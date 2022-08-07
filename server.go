@@ -33,6 +33,8 @@ func (s *server) run() {
 			s.sendMessage(cmd.client, cmd.args)
 		case CMD_QUIT:
 			s.quit(cmd.client, cmd.args)
+		case CMD_HELP:
+			s.help(cmd.client, cmd.args)
 		}
 	}
 }
@@ -109,4 +111,16 @@ func (s *server) removeClientFromRoom(c *client) {
 		delete(c.room.members, c.conn.RemoteAddr())
 		c.room.broadcast(c, fmt.Sprintf("%s has left the room", c.name))
 	}
+}
+
+func (s *server) help(c *client, args []string) {
+	helpMsg := `available commands:
+	"/name <name>" -- Set your username. Otherwise, you will remain anonymous.
+	"/join <room name>" -- Join a chat room. If the room doesn't exist, a new one will be created.
+	"/rooms" -- Show list of available rooms to join.
+	"/msg <message>" -- Broadcast message to everyone in current room.
+	"/quit" -- Disconnect from the chat server.
+	"/help" -- List available commands.`
+	
+	c.msg(helpMsg)
 }
