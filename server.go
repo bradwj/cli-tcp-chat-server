@@ -51,6 +51,7 @@ func (s *server) newClient(conn net.Conn) {
 		commands: s.commands,
 	}
 
+	c.msg(fmt.Sprintln("welcome to the CLI TCP chat server! for a list of commands, type \"/help\""))
 	c.readInput()
 }
 
@@ -71,7 +72,7 @@ func (s *server) setName(c *client, args []string) {
 	}
 
 	c.name = newName
-	c.msg(fmt.Sprintf("changing name to \"%s\"", c.name))
+	c.msg(fmt.Sprintf("changed name to \"%s\"", c.name))
 
 	// broadcast to room when user changes name
 	if c.room != nil {
