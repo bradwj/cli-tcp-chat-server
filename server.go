@@ -34,6 +34,8 @@ func (s *server) run() {
 			s.listRooms(cmd.client, cmd.args)
 		case CMD_MSG:
 			s.sendMessage(cmd.client, cmd.args)
+		case CMD_USERS:
+			s.listUsers(cmd.client, cmd.args)
 		case CMD_QUIT:
 			s.quit(cmd.client, cmd.args)
 		case CMD_HELP:
@@ -140,7 +142,27 @@ func (s *server) sendMessage(c *client, args []string) {
 		return
 	}
 
-	c.room.broadcast(c.name+": "+message)
+	c.room.broadcast(c.name + ": " + message)
+}
+
+func (s *server) listUsers(c *client, args []string) {
+
+	// check if user is in a room
+	if c.room == nil {
+		c.err(errors.New(fmt.Sprint("you must be in a room to list the users")))
+		return
+	}
+
+	var memberNames []string
+	for _, member := range c.room.members {
+		name := member.name
+		if member.name == c.name {
+			name += " (you)"
+		}
+		memberNames = append(memberNames, name)
+	}
+
+	c.msg(fmt.Sprintf("users in this room: %s", strings.Join(memberNames, ", ")))
 }
 
 func (s *server) quit(c *client, args []string) {
@@ -159,7 +181,7 @@ func (s *server) removeClientFromRoom(c *client) {
 
 		// delete room if no members left
 		if len(c.room.members) == 0 {
-			delete(s.rooms, c.room.name)	
+			delete(s.rooms, c.room.name)
 			log.Printf("deleted room: %s", c.room.name)
 		} else {
 			c.room.broadcast(fmt.Sprintf("%s has left the room", c.name))
@@ -174,6 +196,7 @@ func (s *server) help(c *client, args []string) {
 	> "/join <room name>" -- Join a chat room. If the room doesn't exist, a new one will be created.
 	> "/rooms" -- Show list of available rooms to join.
 	> "/msg <message>" -- Broadcast message to everyone in current room.
+	> "/users" -- List the users that are in the current room.
 	> "/quit" -- Disconnect from the chat server.
 	> "/help" -- List available commands.`
 
