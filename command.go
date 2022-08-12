@@ -6,6 +6,8 @@ const (
 	CMD_NAME commandID = iota
 	CMD_JOIN
 	CMD_ROOMS
+	CMD_DESC
+	CMD_INFO
 	CMD_MSG
 	CMD_USERS
 	CMD_LEAVE

@@ -45,6 +45,8 @@ Connection to host lost.
 - `/name <name>` -- Set your username. Otherwise, you will remain anonymous.
 - `/join <room name>` -- Join a chat room. If the room doesn't exist, a new one will be created.
 - `/rooms` -- Show list of available rooms to join.
+- `/desc <room description>` -- Set the description of the current room.
+- `/info [room name]` -- Show the information of either the current room, or [room name] if it is specified.
 - `/msg <message>` -- Broadcast message to everyone in current room.
 - `/users` -- List the users that are in the current room.
 - `/leave` -- Leave the current room.

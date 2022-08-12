@@ -7,6 +7,7 @@ import (
 
 type room struct {
 	name        string
+	description string
 	members     map[net.Addr]*client
 	timeCreated time.Time
 }

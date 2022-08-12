@@ -15,6 +15,7 @@ type server struct {
 
 const MAX_MESSAGE_LENGTH = 1000
 const MAX_NAME_LENGTH = 20
+const MAX_DESC_LENGTH = 100
 
 func newServer() *server {
 	return &server{
@@ -32,6 +33,10 @@ func (s *server) run() {
 			s.joinRoom(cmd.client, cmd.args)
 		case CMD_ROOMS:
 			s.listRooms(cmd.client, cmd.args)
+		case CMD_DESC:
+			s.setRoomDescription(cmd.client, cmd.args)
+		case CMD_INFO:
+			s.getRoomInfo(cmd.client, cmd.args)
 		case CMD_MSG:
 			s.sendMessage(cmd.client, cmd.args)
 		case CMD_USERS:
@@ -66,7 +71,7 @@ func (s *server) setName(c *client, args []string) {
 	}
 
 	oldName := c.name
-	newName := strings.Join(args[1:], " ")
+	newName := args[1]
 	if len(newName) > MAX_NAME_LENGTH {
 		c.err(errors.New(fmt.Sprintf("name is too long! (%d / %d maximum allowed characters)",
 			len(newName),
@@ -108,6 +113,58 @@ func (s *server) joinRoom(c *client, args []string) {
 	r.broadcast(fmt.Sprintf("%s has joined the room", c.name))
 }
 
+func (s *server) setRoomDescription(c *client, args []string) {
+	if c.room == nil {
+		c.err(errors.New("you must be in a room to change the room description."))
+		return
+	}
+
+	if len(args) < 2 {
+		c.err(errors.New("you must enter a description. usage: \"/desc <room description here>\""))
+		return
+	}
+
+	roomDesc := strings.Join(args[1:], " ")
+	if len(roomDesc) > MAX_DESC_LENGTH {
+		c.err(errors.New(fmt.Sprintf("room description is too long! (%d / %d maximum allowed characters)",
+			len(roomDesc),
+			MAX_DESC_LENGTH,
+		)))
+		return
+	}
+
+	c.room.description = roomDesc
+	c.room.broadcast(fmt.Sprintf("%s has changed the room description to:\n%s", c.name, roomDesc))
+}
+
+func (s *server) getRoomInfo(c *client, args []string) {
+	var r *room
+	if len(args) < 2 {
+		if c.room == nil {
+			c.err(errors.New("you must either be in a room or specify the room name to get its info. usage: \"/info [room name]\""))
+			return
+		}
+		// get current room info if no room specified
+		r = c.room
+	} else {
+		// get room info from room name specified in args
+		roomName := args[1]
+		for _, room := range s.rooms {
+			if room.name == roomName {
+				r = room
+			}
+		}
+		// no room found with name
+		if r == nil {
+			c.err(errors.New(fmt.Sprintf("room \"%s\" does not exist", roomName)))
+			return
+		}
+	}
+	// send room info to client
+	c.msg(fmt.Sprintf("Name: %s\nCreated at: %s\nDescription: %s\nMembers: %s",
+		r.name, r.timeCreated.Local().String(), r.description, s.getUserListString(c, r)))
+}
+
 func (s *server) listRooms(c *client, args []string) {
 	if len(s.rooms) == 0 {
 		c.msg("there are no available rooms. type \"/join <room name>\" to create one!")
@@ -142,24 +199,25 @@ func (s *server) sendMessage(c *client, args []string) {
 	c.room.broadcast(c.name + ": " + message)
 }
 
-func (s *server) listUsers(c *client, args []string) {
-
-	// check if user is in a room
-	if c.room == nil {
-		c.err(errors.New(fmt.Sprint("you must be in a room to list the users")))
-		return
-	}
-
+func (s *server) getUserListString(c *client, r *room) string {
 	var memberNames []string
-	for addr, member := range c.room.members {
+	for addr, member := range r.members {
 		name := member.name
 		if addr == c.conn.RemoteAddr() {
 			name += " (you)"
 		}
 		memberNames = append(memberNames, name)
 	}
+	return strings.Join(memberNames, ", ")
+}
 
-	c.msg(fmt.Sprintf("users in this room: %s", strings.Join(memberNames, ", ")))
+func (s *server) listUsers(c *client, args []string) {
+	// check if user is in a room
+	if c.room == nil {
+		c.err(errors.New("you must be in a room to list the users"))
+		return
+	}
+	c.msg(fmt.Sprintf("users in this room: %s", s.getUserListString(c, c.room)))
 }
 
 func (s *server) leaveRoom(c *client, args []string) {
@@ -201,6 +259,8 @@ func (s *server) help(c *client, args []string) {
 	> "/name <name>" -- Set your username. Otherwise, you will remain anonymous.
 	> "/join <room name>" -- Join a chat room. If the room doesn't exist, a new one will be created.
 	> "/rooms" -- Show list of available rooms to join.
+	> "/desc <room description>" -- Set the description of the current room.
+	> "/info [room name]" -- Show the information of either the current room, or [room name] if it is specified.
 	> "/msg <message>" -- Broadcast message to everyone in current room.
 	> "/users" -- List the users that are in the current room.
 	> "/leave" -- Leave the current room.
