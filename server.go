@@ -36,6 +36,8 @@ func (s *server) run() {
 			s.sendMessage(cmd.client, cmd.args)
 		case CMD_USERS:
 			s.listUsers(cmd.client, cmd.args)
+		case CMD_LEAVE:
+			s.leaveRoom(cmd.client, cmd.args)
 		case CMD_QUIT:
 			s.quit(cmd.client, cmd.args)
 		case CMD_HELP:
@@ -51,6 +53,7 @@ func (s *server) newClient(conn net.Conn) {
 		conn:     conn,
 		name:     "anonymous",
 		commands: s.commands,
+		// room:     newNilRoom(),
 	}
 
 	c.msg(fmt.Sprintln("welcome to the CLI TCP chat server! for a list of commands, type \"/help\""))
@@ -87,6 +90,8 @@ func (s *server) joinRoom(c *client, args []string) {
 		c.err(errors.New("you must specify a room name. e.g. \"/join groupchat\""))
 		return
 	}
+	// remove client from current room
+	s.removeClientFromRoom(c)
 
 	roomName := args[1]
 	r, ok := s.rooms[roomName]
@@ -97,16 +102,12 @@ func (s *server) joinRoom(c *client, args []string) {
 			members: make(map[net.Addr]*client),
 		}
 		s.rooms[roomName] = r
+		log.Printf("created room: %s", roomName)
 	}
 
 	r.members[c.conn.RemoteAddr()] = c
-
-	// remove client from current room
-	s.removeClientFromRoom(c)
-
 	c.room = r
 
-	log.Printf("created room: %s", roomName)
 	c.msg(fmt.Sprintf("welcome to %s", r.name))
 	r.broadcast(fmt.Sprintf("%s has joined the room", c.name))
 }
@@ -154,9 +155,9 @@ func (s *server) listUsers(c *client, args []string) {
 	}
 
 	var memberNames []string
-	for _, member := range c.room.members {
+	for addr, member := range c.room.members {
 		name := member.name
-		if member.name == c.name {
+		if addr == c.conn.RemoteAddr() {
 			name += " (you)"
 		}
 		memberNames = append(memberNames, name)
@@ -165,11 +166,20 @@ func (s *server) listUsers(c *client, args []string) {
 	c.msg(fmt.Sprintf("users in this room: %s", strings.Join(memberNames, ", ")))
 }
 
+func (s *server) leaveRoom(c *client, args []string) {
+	if c.room == nil {
+		c.err(errors.New("you are not currently in a room"))
+		return
+	}
+	roomName := c.room.name
+	s.removeClientFromRoom(c)
+	c.msg(fmt.Sprintf("you have left %s", roomName))
+}
+
 func (s *server) quit(c *client, args []string) {
 	log.Printf("client has disconnected: %s", c.conn.RemoteAddr().String())
 
 	s.removeClientFromRoom(c)
-
 	c.msg("goodbye, come back soon!")
 	c.conn.Close()
 }
@@ -197,6 +207,7 @@ func (s *server) help(c *client, args []string) {
 	> "/rooms" -- Show list of available rooms to join.
 	> "/msg <message>" -- Broadcast message to everyone in current room.
 	> "/users" -- List the users that are in the current room.
+	> "/leave" -- Leave the current room.
 	> "/quit" -- Disconnect from the chat server.
 	> "/help" -- List available commands.`
 
