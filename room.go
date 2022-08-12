@@ -1,10 +1,22 @@
 package main
 
-import "net"
+import (
+	"net"
+	"time"
+)
 
 type room struct {
-	name    string
-	members map[net.Addr]*client
+	name        string
+	members     map[net.Addr]*client
+	timeCreated time.Time
+}
+
+func newRoom(name string) *room {
+	return &room{
+		name: name,
+		members: make(map[net.Addr]*client),
+		timeCreated: time.Now(),
+	}
 }
 
 func (r *room) broadcast(msg string) {

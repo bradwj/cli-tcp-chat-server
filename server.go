@@ -96,10 +96,7 @@ func (s *server) joinRoom(c *client, args []string) {
 	r, ok := s.rooms[roomName]
 	// create new room if does not already exist
 	if !ok {
-		r = &room{
-			name:    roomName,
-			members: make(map[net.Addr]*client),
-		}
+		r = newRoom(roomName)
 		s.rooms[roomName] = r
 		log.Printf("created room: %s", roomName)
 	}
