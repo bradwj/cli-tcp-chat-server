@@ -16,8 +16,29 @@ Connected to localhost.
 ```
 Type commands in the telnet CLI
 ```bash
+/name brad
+> changed name to "brad"
+
 /join general
 > welcome to general
+> brad has joined the room
+
+/rooms
+> available rooms are: general
+
+/msg hello there!
+> brad: hello there!
+
+/users
+> users in this room: brad (you)
+
+/leave
+> you have left general
+
+/quit
+> goodbye, come back soon!
+
+Connection to host lost.
 ```
 
 # Commands
