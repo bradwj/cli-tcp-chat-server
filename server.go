@@ -53,7 +53,6 @@ func (s *server) newClient(conn net.Conn) {
 		conn:     conn,
 		name:     "anonymous",
 		commands: s.commands,
-		// room:     newNilRoom(),
 	}
 
 	c.msg(fmt.Sprintln("welcome to the CLI TCP chat server! for a list of commands, type \"/help\""))

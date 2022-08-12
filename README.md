@@ -26,5 +26,6 @@ Type commands in the telnet CLI
 - `/rooms` -- Show list of available rooms to join.
 - `/msg <message>` -- Broadcast message to everyone in current room.
 - `/users` -- List the users that are in the current room.
+- `/leave` -- Leave the current room.
 - `/quit` -- Disconnect from the chat server.
 - `/help` -- List available commands.
